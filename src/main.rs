@@ -106,7 +106,7 @@ fn cmd_report(
 
     // Determine formats to output
     let formats: Vec<&str> = if all_formats {
-        vec!["md", "csv", "json"]
+        vec!["md", "csv", "tsv", "json"]
     } else {
         format.split(',').map(|s| s.trim()).collect()
     };
@@ -118,6 +118,7 @@ fn cmd_report(
         let content = match fmt {
             "md" | "markdown" => report::markdown::generate(&report_data, config.include_commits),
             "csv" => report::csv::generate_string(&report_data, config.include_commits)?,
+            "tsv" => report::tsv::generate_string(&report_data, config.include_commits)?,
             "json" => report::json::generate(&report_data)?,
             _ => {
                 eprintln!("Unknown format: {}", fmt);
@@ -129,6 +130,7 @@ fn cmd_report(
             let ext = match fmt {
                 "md" | "markdown" => "md",
                 "csv" => "csv",
+                "tsv" => "tsv",
                 "json" => "json",
                 _ => fmt,
             };

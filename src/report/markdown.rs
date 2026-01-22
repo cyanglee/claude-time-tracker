@@ -28,15 +28,16 @@ pub fn generate(report: &MonthlyReport, include_commits: bool) -> String {
 
         // Work items table
         if include_commits {
-            output.push_str("| 工作項 | 時間 | Commits |\n");
-            output.push_str("|--------|------|----------|\n");
+            output.push_str("| 工作項 | 完成日期 | 時間 | Commits |\n");
+            output.push_str("|--------|----------|------|----------|\n");
         } else {
-            output.push_str("| 工作項 | 時間 |\n");
-            output.push_str("|--------|------|\n");
+            output.push_str("| 工作項 | 完成日期 | 時間 |\n");
+            output.push_str("|--------|----------|------|\n");
         }
 
         for item in &project.work_items {
             let time_str = format_duration(item.total_seconds);
+            let date_str = item.completed_date.as_deref().unwrap_or("-");
 
             if include_commits {
                 let commits_str = if item.commits.is_empty() {
@@ -49,9 +50,9 @@ pub fn generate(report: &MonthlyReport, include_commits: bool) -> String {
                         .join("、")
                 };
 
-                output.push_str(&format!("| {} | {} | {} |\n", item.id, time_str, commits_str));
+                output.push_str(&format!("| {} | {} | {} | {} |\n", item.id, date_str, time_str, commits_str));
             } else {
-                output.push_str(&format!("| {} | {} |\n", item.id, time_str));
+                output.push_str(&format!("| {} | {} | {} |\n", item.id, date_str, time_str));
             }
         }
 
@@ -90,6 +91,7 @@ mod tests {
                     id: "ABC-123".to_string(),
                     branch: Some("feature/ABC-123-test".to_string()),
                     total_seconds: 7200,
+                    completed_date: Some("2025-01-15".to_string()),
                     commits: vec![CommitSummary {
                         hash: "abc123".to_string(),
                         message: "Test commit".to_string(),

@@ -67,18 +67,23 @@ pub fn start_session(db: &Database, project_path: &Path, config: &EffectiveConfi
 }
 
 /// Record a heartbeat for the current session
+/// If no active session exists, silently succeeds (session will be created on next start)
 pub fn record_heartbeat(db: &Database, project_path: &Path) -> Result<()> {
     let path_str = project_path
         .to_str()
         .context("Invalid project path")?;
 
-    let project = db
-        .get_project_by_path(path_str)?
-        .context("Project not found. Run 'start' first.")?;
+    // If project doesn't exist, just return Ok (no session to track)
+    let project = match db.get_project_by_path(path_str)? {
+        Some(p) => p,
+        None => return Ok(()),
+    };
 
-    let session = db
-        .get_active_session(project.id)?
-        .context("No active session. Run 'start' first.")?;
+    // If no active session, just return Ok (session might have been stopped)
+    let session = match db.get_active_session(project.id)? {
+        Some(s) => s,
+        None => return Ok(()),
+    };
 
     db.record_heartbeat(session.id)?;
 

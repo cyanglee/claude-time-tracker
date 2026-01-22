@@ -9,9 +9,9 @@ pub fn generate<W: Write>(report: &MonthlyReport, writer: W, include_commits: bo
 
     // Write header
     if include_commits {
-        wtr.write_record(["project", "work_item", "hours", "minutes", "total_seconds", "commits"])?;
+        wtr.write_record(["project", "work_item", "completed_date", "hours", "minutes", "total_seconds", "commits"])?;
     } else {
-        wtr.write_record(["project", "work_item", "hours", "minutes", "total_seconds"])?;
+        wtr.write_record(["project", "work_item", "completed_date", "hours", "minutes", "total_seconds"])?;
     }
 
     // Write data rows
@@ -19,6 +19,7 @@ pub fn generate<W: Write>(report: &MonthlyReport, writer: W, include_commits: bo
         for item in &project.work_items {
             let hours = item.total_seconds / 3600;
             let minutes = (item.total_seconds % 3600) / 60;
+            let date_str = item.completed_date.as_deref().unwrap_or("");
 
             if include_commits {
                 let commits_str = item
@@ -31,6 +32,7 @@ pub fn generate<W: Write>(report: &MonthlyReport, writer: W, include_commits: bo
                 wtr.write_record([
                     &project.name,
                     &item.id,
+                    date_str,
                     &hours.to_string(),
                     &minutes.to_string(),
                     &item.total_seconds.to_string(),
@@ -40,6 +42,7 @@ pub fn generate<W: Write>(report: &MonthlyReport, writer: W, include_commits: bo
                 wtr.write_record([
                     &project.name,
                     &item.id,
+                    date_str,
                     &hours.to_string(),
                     &minutes.to_string(),
                     &item.total_seconds.to_string(),
@@ -77,6 +80,7 @@ mod tests {
                     id: "ABC-123".to_string(),
                     branch: Some("feature/ABC-123-test".to_string()),
                     total_seconds: 7200,
+                    completed_date: Some("2025-01-15".to_string()),
                     commits: vec![CommitSummary {
                         hash: "abc123".to_string(),
                         message: "Test commit".to_string(),
@@ -86,9 +90,10 @@ mod tests {
         };
 
         let csv = generate_string(&report, true).unwrap();
-        assert!(csv.contains("project,work_item,hours,minutes,total_seconds,commits"));
+        assert!(csv.contains("project,work_item,completed_date,hours,minutes,total_seconds,commits"));
         assert!(csv.contains("Test Project"));
         assert!(csv.contains("ABC-123"));
+        assert!(csv.contains("2025-01-15"));
         assert!(csv.contains("2,0,7200")); // 2 hours, 0 minutes, 7200 seconds
     }
 }

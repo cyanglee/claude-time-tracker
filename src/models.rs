@@ -86,6 +86,7 @@ pub struct WorkItemReport {
     pub id: String,
     pub branch: Option<String>,
     pub total_seconds: i64,
+    pub completed_date: Option<String>,
     pub commits: Vec<CommitSummary>,
 }
 

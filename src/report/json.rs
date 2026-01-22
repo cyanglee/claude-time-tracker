@@ -26,6 +26,7 @@ mod tests {
                     id: "ABC-123".to_string(),
                     branch: Some("feature/ABC-123-test".to_string()),
                     total_seconds: 7200,
+                    completed_date: Some("2025-01-15".to_string()),
                     commits: vec![CommitSummary {
                         hash: "abc123".to_string(),
                         message: "Test commit".to_string(),

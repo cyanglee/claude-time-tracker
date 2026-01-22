@@ -1,9 +1,10 @@
 pub mod csv;
 pub mod json;
 pub mod markdown;
+pub mod tsv;
 
 use anyhow::{Context, Result};
-use chrono::{Datelike, NaiveDate, TimeZone, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Utc};
 use std::collections::HashMap;
 
 use crate::db::Database;
@@ -55,7 +56,8 @@ pub fn generate_report(
         }
 
         // Group sessions by work item
-        let mut work_items: HashMap<String, (i64, Vec<CommitSummary>, Option<String>)> = HashMap::new();
+        // (total_seconds, commits, branch, completed_date)
+        let mut work_items: HashMap<String, (i64, Vec<CommitSummary>, Option<String>, Option<DateTime<Utc>>)> = HashMap::new();
 
         for session in &sessions {
             let work_item_id = session
@@ -65,9 +67,16 @@ pub fn generate_report(
 
             let entry = work_items
                 .entry(work_item_id)
-                .or_insert_with(|| (0, Vec::new(), Some(session.branch.clone())));
+                .or_insert_with(|| (0, Vec::new(), Some(session.branch.clone()), None));
 
             entry.0 += session.active_seconds.unwrap_or(0);
+
+            // Track the latest ended_at as completed date
+            if let Some(ended) = session.ended_at {
+                if entry.3.map_or(true, |existing| ended > existing) {
+                    entry.3 = Some(ended);
+                }
+            }
 
             // Get commits for this session
             if let Ok(commits) = db.get_commits(session.id) {
@@ -82,7 +91,7 @@ pub fn generate_report(
             }
         }
 
-        let project_total: i64 = work_items.values().map(|(s, _, _)| s).sum();
+        let project_total: i64 = work_items.values().map(|(s, _, _, _)| s).sum();
 
         if project_total == 0 {
             continue;
@@ -92,10 +101,11 @@ pub fn generate_report(
 
         let mut work_item_reports: Vec<WorkItemReport> = work_items
             .into_iter()
-            .map(|(id, (seconds, commits, branch))| WorkItemReport {
+            .map(|(id, (seconds, commits, branch, completed))| WorkItemReport {
                 id,
                 branch,
                 total_seconds: seconds,
+                completed_date: completed.map(|dt| dt.format("%Y-%m-%d").to_string()),
                 commits,
             })
             .collect();
