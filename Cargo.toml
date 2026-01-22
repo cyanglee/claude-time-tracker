@@ -1,0 +1,46 @@
+[package]
+name = "claude-time-tracker"
+version = "0.1.0"
+edition = "2021"
+description = "Track Claude Code usage time per project and generate monthly reports"
+authors = ["take5"]
+license = "MIT"
+
+[dependencies]
+# CLI framework
+clap = { version = "4", features = ["derive"] }
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Git operations (pure Rust implementation, no libgit2 dependency)
+gix = { version = "0.66", default-features = false, features = ["basic", "blocking-network-client"] }
+
+# Path expansion
+shellexpand = "3"
+dirs = "5"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Regex for work item parsing
+regex = "1"
+
+# CSV output
+csv = "1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[[bin]]
+name = "claude-time-tracker"
+path = "src/main.rs"
